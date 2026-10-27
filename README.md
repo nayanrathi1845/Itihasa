@@ -5,7 +5,7 @@ A WebView wrapper around the Itihasa web app. All web files live in `app/src/mai
 ## Get the APK (no Android Studio needed)
 1. Create a new GitHub repository and upload everything in this folder. The `.github` folder is hidden and drag-and-drop often skips it; if the Actions tab shows no workflow, use "Add file → Create new file", name it `.github/workflows/build-apk.yml`, and paste in the contents of that file.
 2. Open the repo's **Actions** tab → **Build Android APK** → wait about 3–5 minutes.
-3. Open the finished run, download the **Itihasa-APK** artifact (a zip), and unzip it to get `app-debug.apk`.
+3. Open the finished run, open the repo's **Releases** page and download `Itihasa.apk`.
 4. Copy it to your phone and install it (allow "Install unknown apps" when asked).
 
 Run the workflow again any time from Actions → Build Android APK → Run workflow.
