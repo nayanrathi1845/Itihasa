@@ -21,3 +21,9 @@ Keep the web copy in sync: `index.html` here is the same file as the PWA version
 - The APK is a *debug* build: it installs and runs fine, but it is not for the Play Store. A signed release build needs your own keystore.
 - Back button returns to Home first, then exits.
 - The app needs no internet permission.
+
+## Profiles
+On first launch the app asks the user to create a profile (username, email, password). Profiles, bookmarks, reading progress and language are stored **on the device only** (browser/WebView local storage); passwords are stored as salted hashes (PBKDF2-SHA-256, with a SHA-256 fallback). There is no server, so there is no password reset and data does not sync across devices. To sync across devices later, the profile code (`doSignup`, `doLogin`, `saveData` in `index.html`) is the part to point at a backend.
+
+## Reading
+Stories are read like reels: swipe up (or scroll / press ↓) at the end of a story for the next one, swipe down at the top for the previous one.
