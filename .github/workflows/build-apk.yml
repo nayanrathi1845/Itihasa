@@ -31,8 +31,21 @@ jobs:
           fi
           exit $code
 
+      - name: Compile the minified release (unsigned) as a build check
+        run: |
+          set +e
+          ./gradlew assembleRelease --no-daemon > release-check.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            msg=$(grep -E "error:|What went wrong|FAILED|Could not|Execution failed|Caused by|AAPT|R8|Missing class" -A4 release-check.log | head -45 | awk 'BEGIN{ORS="%0A"}1')
+            echo "::error title=Release compile failed::$msg"
+          fi
+          exit $code
+          
       - name: Name the APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Itihasa.apk
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk Itihasa.apk
+          cp app/build/outputs/apk/release/app-release-unsigned.apk Itihasa-release-unsigned-check.apk
 
       - uses: actions/upload-artifact@v4
         with:
@@ -44,7 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "build-${{ github.run_number }}" Itihasa.apk \
+          gh release create "build-${{ github.run_number }}" Itihasa.apk Itihasa-release-unsigned-check.apk \
             --title "Itihasa APK (build ${{ github.run_number }})" \
             --notes "Debug APK built from commit ${{ github.sha }}. Download Itihasa.apk and install it on your Android phone." \
             --latest
