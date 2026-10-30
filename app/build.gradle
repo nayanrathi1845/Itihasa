@@ -11,13 +11,32 @@ android {
         applicationId 'com.itihasa.app'
         minSdk 24
         targetSdk 36
-        versionCode 2
+        versionCode 3
         versionName '1.0.0'
+    }
+
+    // Release signing: the upload key is supplied by the release workflow through environment
+    // variables (GitHub secrets). Nothing secret is stored in the repository.
+    signingConfigs {
+        release {
+            def ks = System.getenv('KEYSTORE_FILE')
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEY_ALIAS')
+                keyPassword System.getenv('KEY_PASSWORD')
+            }
+        }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (System.getenv('KEYSTORE_FILE')) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 

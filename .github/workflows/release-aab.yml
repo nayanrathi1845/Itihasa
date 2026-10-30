@@ -1,0 +1,67 @@
+name: Build signed release (AAB + APK)
+
+# Manual only. Needs four repository secrets (Settings > Secrets and variables > Actions):
+#   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Check signing secrets
+        run: |
+          for v in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!v}" ]; then echo "::error title=Missing secret::Repository secret $v is not set."; exit 1; fi
+          done
+
+      - name: Build signed release
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          export KEYSTORE_FILE="$RUNNER_TEMP/upload.jks"
+          chmod +x gradlew
+          set +e
+          ./gradlew bundleRelease assembleRelease --no-daemon > build.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            msg=$(grep -E "error:|What went wrong|FAILED|Could not|not found|Execution failed|Caused by|Manifest merger|AAPT|R8|Missing class" -A4 build.log | head -45 | awk 'BEGIN{ORS="%0A"}1')
+            echo "::error title=Release build failed::$msg"
+          fi
+          exit $code
+
+      - name: Verify signature and print fingerprints
+        run: |
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -1)
+          out=$($APKSIGNER verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk 2>&1)
+          echo "$out"
+          sha=$(echo "$out" | grep -m1 "certificate SHA-256 digest" | sed 's/.*: //')
+          echo "::notice title=Release APK signer SHA-256::$sha"
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | tail -2
+          keytool -printcert -jarfile app/build/outputs/bundle/release/app-release.aab 2>/dev/null | grep -E "SHA256" | head -1 | sed 's/^/AAB signer /'
+          ls -la app/build/outputs/bundle/release/ app/build/outputs/apk/release/
+
+      - name: Publish release candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/bundle/release/app-release.aab Itihasa-release.aab
+          cp app/build/outputs/apk/release/app-release.apk Itihasa-release.apk
+          gh release create "rc-${{ github.run_number }}" Itihasa-release.aab Itihasa-release.apk \
+            --prerelease \
+            --title "Itihasa release candidate (run ${{ github.run_number }})" \
+            --notes "Signed with the Itihasa upload key. Itihasa-release.aab is for Google Play; Itihasa-release.apk is the same build for testing on a phone. Commit ${{ github.sha }}."

@@ -65,6 +65,10 @@ public class MainActivity extends Activity {
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true); // needed for localStorage (profiles, bookmarks, progress, language)
+        // The page only needs its own bundled assets: no content:// access, no cross-file reads.
+        s.setAllowContentAccess(false);
+        s.setAllowFileAccessFromFileURLs(false);
+        s.setAllowUniversalAccessFromFileURLs(false);
 
         webView.addJavascriptInterface(bridge, "ItihasaNative");
         webView.setWebViewClient(new WebViewClient() {
