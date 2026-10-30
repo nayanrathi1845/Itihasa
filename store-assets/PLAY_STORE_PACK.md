@@ -1,5 +1,5 @@
 # Itihasa: Google Play launch pack (Stage 5)
-Developer name: NR1845 · Contact: nayan.rathi1845@gmail.com · Package: com.itihasa.app · Version 1.0.0 (code 3)
+Developer name: NR1845 · Contact: nayan.rathi1845@gmail.com · Package: com.nr1845.itihasa · Version 1.0.0 (code 3)
 Policy and deletion pages (publish via GitHub Pages first, see step 1): https://nayanrathi1845.github.io/Itihasa/privacy.html and https://nayanrathi1845.github.io/Itihasa/delete-data.html
 
 > I am not a lawyer. The privacy policy is a good-faith description of what the app actually does; please read it once and confirm you are comfortable with it.
@@ -110,7 +110,7 @@ Tips: add testers by email list or a Google Group; Google needs 12+ opted in for
 ## 9. Firebase console (manual)
 - Analytics → Admin (gear) → **Custom definitions**: add custom dimensions story_id, scripture_id, language, search_category, app_version (event-scoped) and custom metric duration (seconds).
 - Admin → Data collection and modification: keep **Google signals OFF** (no ad personalisation); Data settings → **Data retention**: 2 or 14 months (policy allows up to 14).
-- Use **DebugView** (adb setprop debug.firebase.analytics.app com.itihasa.app) to check events from the release build.
+- Use **DebugView** (adb setprop debug.firebase.analytics.app com.nr1845.itihasa) to check events from the release build.
 - Optional, last: restricting the API key in Google Cloud is not required for Analytics; if you do, use the Play app-signing certificate (not the upload key) or analytics may stop.
 
 ## 10. Needs decisions or later

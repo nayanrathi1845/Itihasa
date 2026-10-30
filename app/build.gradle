@@ -8,7 +8,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId 'com.itihasa.app'
+        applicationId 'com.nr1845.itihasa'
         minSdk 24
         targetSdk 36
         versionCode 3
