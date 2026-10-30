@@ -22,7 +22,14 @@ jobs:
       - name: Build debug APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          set +e
+          ./gradlew assembleDebug --no-daemon > build.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            msg=$(grep -E "error:|What went wrong|FAILED|Could not|not found|Execution failed|Caused by|Manifest merger|AAPT" -A4 build.log | head -45 | awk 'BEGIN{ORS="%0A"}1')
+            echo "::error title=Gradle build failed::$msg"
+          fi
+          exit $code
 
       - name: Name the APK
         run: cp app/build/outputs/apk/debug/app-debug.apk Itihasa.apk
