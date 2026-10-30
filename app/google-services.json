@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "190407796953",
+    "project_id": "itihasa-9c5bf",
+    "storage_bucket": "itihasa-9c5bf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:190407796953:android:651ee5b2dd4421a71ff6c8",
+        "android_client_info": {
+          "package_name": "com.itihasa.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8OKiC2H0gptvS6IfKJlOUGwWN69ycGzk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
