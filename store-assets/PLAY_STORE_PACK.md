@@ -1,6 +1,8 @@
 # Itihasa: Google Play launch pack (Stage 5)
-Developer name: NR1845 · Contact: nayan.rathi1845@gmail.com · Package: com.nr1845.itihasa · Version 1.0.0 (code 3)
+Developer name: NR1845 · Contact: nayan.rathi1845@gmail.com · Package: **com.nr1845.itihasa** · Version 1.0.0 (code 3)
 Policy and deletion pages (publish via GitHub Pages first, see step 1): https://nayanrathi1845.github.io/Itihasa/privacy.html and https://nayanrathi1845.github.io/Itihasa/delete-data.html
+
+> Updated 3 Nov 2026: package name corrected to `com.nr1845.itihasa` (Play said `com.itihasa.app` was taken), release reference corrected to rc-2, DebugView steps fixed (section 9).
 
 > I am not a lawyer. The privacy policy is a good-faith description of what the app actually does; please read it once and confirm you are comfortable with it.
 
@@ -97,20 +99,29 @@ Google's own pages I read did not give an exact Firebase-to-form mapping, so I c
 First release: 40 Ramayana stories in English and Hindi, with illustrations, bookmarks and reading progress. Works offline.
 
 ## 7. Console technical items
-- Upload `Itihasa-release.aab` (from GitHub release `rc-1`; for any later upload, **raise versionCode in `app/build.gradle` first**, then run the Release workflow again).
-- Keep **Play App Signing** on (default). After first upload Play shows its own app-signing certificate; the upload key stays with you (`itihasa-upload.jks`).
+- Package name in Play Console: **`com.nr1845.itihasa`** (fixed for the life of the app; it cannot be changed after the first upload).
+- Upload `Itihasa-release.aab` from the **latest** GitHub pre-release (currently `rc-2`, version 1.0.0, code 3). Do not use `rc-1`: it was built with the old package name.
+- For any later upload: **raise `versionCode` in `app/build.gradle` first** (3 → 4 → 5…), then run the Release workflow again; it publishes the next `rc-N`. Play rejects a versionCode it has already seen.
+- Keep **Play App Signing** on (default). After first upload Play shows its own app-signing certificate; the upload key stays with you (`itihasa-upload.jks`). Back it up in two safe places.
 - Countries: start with India (add more later if you wish).
 
 ## 8. Closed testing guide (for your 12+ testers)
 Send each tester this message once the track is live (replace the link with the opt-in link Play Console gives you):
 > Hi! I'm testing my Ramayana stories app, Itihasa, and need testers. 1) Use the Google account whose email I added. 2) Open this link and tap "Become a tester": [OPT-IN LINK]. 3) Install Itihasa from the Play Store link on that page. 4) Please open it a few times over the next two weeks and **don't leave the test early**, it must stay on for 14 days. 5) Reply with anything confusing, slow or broken.
 What testers should try: create a profile; read 3+ stories (swipe up/down); switch English/Hindi; save a story and close and reopen the app; turn on airplane mode and read offline; share a story; Profile → delete profile.
-Tips: add testers by email list or a Google Group; Google needs 12+ opted in for 14 consecutive days (Play Help, closed testing); recruit 15–20 in case some drop out.
+Tips: add testers by email list or a Google Group; Google needs 12+ opted in for 14 consecutive days (Play Help, closed testing); recruit 15–20 in case some drop out. Keep a simple log of tester feedback and what you changed: the production-access application asks about it.
 
 ## 9. Firebase console (manual)
+- The Firebase project `itihasa-9c5bf` now has **two Android apps** (old `com.itihasa.app`, new `com.nr1845.itihasa`). The release build reports to **`com.nr1845.itihasa`**: pick that app/stream when filtering reports. The old entry can be left alone or deleted later.
 - Analytics → Admin (gear) → **Custom definitions**: add custom dimensions story_id, scripture_id, language, search_category, app_version (event-scoped) and custom metric duration (seconds).
 - Admin → Data collection and modification: keep **Google signals OFF** (no ad personalisation); Data settings → **Data retention**: 2 or 14 months (policy allows up to 14).
-- Use **DebugView** (adb setprop debug.firebase.analytics.app com.nr1845.itihasa) to check events from the release build.
+- **DebugView** (to see events live from your phone):
+  1. On the phone: Settings → About phone → tap Build number 7 times → Developer options → turn on **USB debugging**. Connect to a computer with Android platform-tools (`adb`) installed and accept the prompt.
+  2. Run: `adb shell setprop debug.firebase.analytics.app com.nr1845.itihasa`
+  3. Force-close Itihasa and open it again, read a story or two.
+  4. Firebase console → Analytics → **DebugView**: your phone appears within about a minute with `app_open`, `story_opened` and so on.
+  5. When done: `adb shell setprop debug.firebase.analytics.app .none.`
+  Without DebugView, normal events still arrive but show in reports only after several hours (up to a day); Realtime shows them within minutes.
 - Optional, last: restricting the API key in Google Cloud is not required for Analytics; if you do, use the Play app-signing certificate (not the upload key) or analytics may stop.
 
 ## 10. Needs decisions or later
