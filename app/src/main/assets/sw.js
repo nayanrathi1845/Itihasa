@@ -1,6 +1,6 @@
 // Itihasa service worker — offline support.
 // Bump CACHE_VERSION whenever any cached file (including images) changes.
-const CACHE_VERSION = 'itihasa-v9';
+const CACHE_VERSION = 'itihasa-v10';
 const CORE = [
   './',
   './index.html',
