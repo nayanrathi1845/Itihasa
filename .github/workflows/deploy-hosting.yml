@@ -1,0 +1,30 @@
+name: Deploy story images (Firebase Hosting)
+
+# Publishes hosting/public to https://itihasa-9c5bf.web.app
+# Requires the repository secret FIREBASE_SERVICE_ACCOUNT (Firebase service-account key, JSON).
+on:
+  push:
+    branches: [main]
+    paths: ['hosting/**', '.github/workflows/deploy-hosting.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check that the secret exists
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then echo "::error::Add the repository secret FIREBASE_SERVICE_ACCOUNT first."; exit 1; fi
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: itihasa-9c5bf
+          channelId: live
+          entryPoint: hosting
