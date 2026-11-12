@@ -11,8 +11,8 @@ android {
         applicationId 'com.nr1845.itihasa'
         minSdk 24
         targetSdk 36
-        versionCode 7
-        versionName '1.3.0'
+        versionCode 8
+        versionName '1.3.1'
     }
 
     // Release signing: the upload key is supplied by the release workflow through environment
