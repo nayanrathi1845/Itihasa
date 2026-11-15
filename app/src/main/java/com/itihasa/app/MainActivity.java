@@ -13,6 +13,7 @@ import android.window.OnBackInvokedDispatcher;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -20,14 +21,29 @@ import android.widget.LinearLayout;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 /**
  * Hosts the bundled Itihasa web app (app/src/main/assets/index.html) in a full-screen WebView.
- * Everything runs offline from the APK. Bookmarks and progress live in the WebView's localStorage.
- * Firebase Analytics (anonymous usage events only) is reached through {@link NativeBridge}.
+ * Story text runs offline from the APK; story illustrations are fetched once from Firebase Hosting and
+ * then kept on the device. Bookmarks and progress live in the WebView's localStorage.
+ * Firebase Analytics (anonymous usage events) and Firebase Authentication (accounts) are reached
+ * through {@link NativeBridge}.
  */
 public class MainActivity extends Activity {
 
     private static final String APP_URL = "file:///android_asset/index.html";
+    private static final String IMG_PREFIX = "https://itihasa-9c5bf.web.app/img/";
+    private static final Pattern IMG_NAME = Pattern.compile("[a-z0-9-]{1,120}\\.webp");
+    private static final long MAX_IMG_BYTES = 3L * 1024 * 1024;
 
     private WebView webView;
     private FirebaseAnalytics analytics;
@@ -67,15 +83,26 @@ public class MainActivity extends Activity {
         s.setDomStorageEnabled(true); // needed for localStorage (profiles, bookmarks, progress, language)
         // The page only needs its own bundled assets: no content:// access, no cross-file reads.
         s.setAllowContentAccess(false);
+        s.setAllowFileAccess(false); // file:///android_asset/ stays readable; other file:// paths do not
+        s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        if (Build.VERSION.SDK_INT >= 26) s.setSafeBrowsingEnabled(true);
         s.setAllowFileAccessFromFileURLs(false);
         s.setAllowUniversalAccessFromFileURLs(false);
 
+        bridge.attach(webView);
         webView.addJavascriptInterface(bridge, "ItihasaNative");
         webView.setWebViewClient(new WebViewClient() {
             // Only the bundled page may load in the WebView (the bridge must never be reachable by remote pages).
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return !request.getUrl().toString().startsWith("file:///android_asset/");
+            }
+
+            // Story illustrations live on Firebase Hosting. Each one is downloaded once, kept in the
+            // app's private storage and served from there afterwards (so it also works offline).
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return storyImage(request);
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
@@ -114,6 +141,57 @@ public class MainActivity extends Activity {
         } else {
             webView.loadUrl(APP_URL);
             bridge.log("app_open", appOpenParams());
+        }
+    }
+
+    private WebResourceResponse storyImage(WebResourceRequest request) {
+        try {
+            String url = request.getUrl().toString();
+            if (!url.startsWith(IMG_PREFIX) || !"GET".equalsIgnoreCase(request.getMethod())) return null;
+            String name = url.substring(IMG_PREFIX.length());
+            if (!IMG_NAME.matcher(name).matches()) return null;
+            File dir = new File(getFilesDir(), "img");
+            File file = new File(dir, name);
+            if (!file.isFile() || file.length() == 0) downloadImage(url, dir, file);
+            if (!file.isFile() || file.length() == 0) return null; // let the WebView try (and fail quietly offline)
+            WebResourceResponse resp = new WebResourceResponse("image/webp", null, new FileInputStream(file));
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Cache-Control", "max-age=31536000");
+            resp.setResponseHeaders(headers);
+            return resp;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static void downloadImage(String url, File dir, File target) {
+        HttpURLConnection c = null;
+        File tmp = null;
+        try {
+            if (!dir.isDirectory() && !dir.mkdirs()) return;
+            c = (HttpURLConnection) new URL(url).openConnection();
+            c.setConnectTimeout(10000);
+            c.setReadTimeout(20000);
+            c.setInstanceFollowRedirects(false);
+            if (c.getResponseCode() != 200) return;
+            String type = c.getContentType();
+            if (type == null || !type.startsWith("image/")) return;
+            tmp = new File(dir, target.getName() + "." + System.nanoTime() + ".tmp");
+            long total = 0;
+            try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(tmp)) {
+                byte[] buf = new byte[16384];
+                int n;
+                while ((n = in.read(buf)) > 0) {
+                    total += n;
+                    if (total > MAX_IMG_BYTES) return;
+                    out.write(buf, 0, n);
+                }
+            }
+            if (total > 0 && tmp.renameTo(target)) tmp = null;
+        } catch (Exception ignored) {
+        } finally {
+            if (tmp != null) tmp.delete();
+            if (c != null) c.disconnect();
         }
     }
 
