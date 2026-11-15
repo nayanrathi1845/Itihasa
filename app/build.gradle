@@ -11,8 +11,8 @@ android {
         applicationId 'com.nr1845.itihasa'
         minSdk 24
         targetSdk 36
-        versionCode 10
-        versionName '1.4.0'
+        versionCode 11
+        versionName '2.0.0'
     }
 
     // Release signing: the upload key is supplied by the release workflow through environment
@@ -47,7 +47,8 @@ android {
 }
 
 dependencies {
-    // Firebase Analytics only (no Auth / Firestore / Realtime DB). Versions are managed by the BoM.
+    // Firebase Analytics + Authentication (no Firestore / Realtime DB). Versions are managed by the BoM.
     implementation platform('com.google.firebase:firebase-bom:35.1.0')
     implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-auth'
 }

@@ -2,8 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Story content is bundled and works offline. INTERNET / network state are used only by
-         Firebase Analytics to upload anonymous usage events when a connection is available. -->
+    <!-- Story text is bundled and works offline. INTERNET / network state are used for account
+         sign-in (Firebase Authentication), downloading story illustrations (Firebase Hosting) and
+         uploading anonymous usage events (Firebase Analytics). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -15,6 +16,8 @@
 
     <application
         android:allowBackup="false"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:usesCleartextTraffic="false"
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="Itihasa"
@@ -23,6 +26,8 @@
         <!-- Analytics privacy defaults: no advertising ID, no ad personalisation. -->
         <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
         <meta-data android:name="google_analytics_default_allow_ad_personalization_signals" android:value="false" />
+
+        <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing" android:value="true" />
 
         <activity
             android:name=".MainActivity"
